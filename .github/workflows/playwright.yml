@@ -44,13 +44,14 @@ jobs:
           npx cucumber-js || true
         timeout-minutes: 5
       
-      - name: Generate Allure report
+      - name: Generate Allure report (without server)
         run: |
           # Generate adapter without browser opening
           node src/utils/cucumber-allure-adapter.js || true
           
-          # Generate report with CI mode to avoid browser opening
-          CI=true node src/utils/run-allure-report.js || true
+          # Just generate the report without starting server
+          echo "Generating Allure report without starting server..."
+          npx allure generate allure-results -o allure-report --clean
         timeout-minutes: 2
       
       - name: Upload test results
