@@ -12,6 +12,8 @@ A robust automation framework built with Playwright, TypeScript, and Cucumber.js
 - Environment configuration via .env file
 - Screenshot capture on test failures
 - Cross-platform compatibility (Windows, Linux, macOS)
+- Slack notifications for test results
+- GitHub Pages integration for Allure reports
 
 ## Prerequisites
 
@@ -134,6 +136,66 @@ Cucumber HTML reports are generated in `src/reports/cucumber-html-report.html`.
 ### Allure Reports
 Allure reports are generated in the `allure-report` directory. After generating the report, it should automatically open in your default browser.
 
+## CI/CD Integration
+
+### Setting Up Slack Notifications
+
+To receive test results in Slack:
+
+1. **Create a Slack App**:
+   - Go to [Slack API Apps](https://api.slack.com/apps) and click "Create New App"
+   - Choose "From scratch" and enter a name (e.g., "Test Automation")
+   - Select your workspace and click "Create App"
+
+2. **Enable Incoming Webhooks**:
+   - In the left sidebar, click "Incoming Webhooks"
+   - Toggle the switch to "On"
+   - Click "Add New Webhook to Workspace"
+   - Select the channel where you want to receive notifications
+   - Click "Allow"
+
+3. **Copy the Webhook URL**:
+   - After allowing access, you'll see a webhook URL
+   - Copy the entire URL (it starts with `https://hooks.slack.com/services/`)
+
+4. **Add to GitHub Secrets**:
+   - Go to your GitHub repository
+   - Navigate to Settings → Secrets and variables → Actions
+   - Click "New repository secret"
+   - Name: `SLACK_WEBHOOK_URL`
+   - Value: Paste the webhook URL
+   - Click "Add secret"
+
+The GitHub Actions workflow will automatically use this webhook to send notifications about test results to your Slack channel.
+
+### Viewing Allure Reports on GitHub Pages
+
+The framework is configured to automatically publish Allure reports to GitHub Pages:
+
+1. **Enable GitHub Pages**:
+   - Go to your repository on GitHub
+   - Navigate to Settings → Pages
+   - Under "Source", select "Deploy from a branch"
+   - Select the "gh-pages" branch
+   - Click "Save"
+
+2. **Access Your Reports**:
+   - After the GitHub Actions workflow runs successfully, your Allure reports will be available at:
+   - `https://[your-username].github.io/playwright-BDD/`
+   - For example: https://rrendon2025.github.io/playwright-BDD/
+
+3. **Workflow Configuration**:
+   - The GitHub Actions workflow automatically:
+     - Runs your tests
+     - Generates Allure reports
+     - Publishes them to GitHub Pages
+     - Sends results to Slack
+
+4. **Manually Triggering the Workflow**:
+   - Go to the Actions tab in your repository
+   - Select the "Playwright BDD Tests" workflow
+   - Click "Run workflow" to manually trigger a test run
+
 ## Project Structure
 
 ```
@@ -178,6 +240,14 @@ If you encounter issues with the Allure report:
    npm install allure-commandline@latest --save-dev
    ```
 
+### GitHub Pages Issues
+If your Allure reports aren't appearing on GitHub Pages:
+
+1. **Check workflow run** - Go to the Actions tab to ensure the workflow ran successfully
+2. **Verify gh-pages branch** - Confirm the gh-pages branch was created with content
+3. **Check Pages settings** - Ensure GitHub Pages is configured to deploy from gh-pages branch
+4. **Allow time for deployment** - GitHub Pages can take up to 10 minutes to deploy after a successful workflow
+
 ## Step Navigation in Feature Files
 
 To enable Ctrl+Click navigation from feature files to step definitions:
@@ -202,10 +272,8 @@ To enable Ctrl+Click navigation from feature files to step definitions:
 - Environment variables are stored in a root-level `.env` file
 - Automatically manages test result directories (screenshots, videos)
 - Generates comprehensive HTML and Allure reports
-
-
-npm run test:allure:full
-npm run test:allure:full:video 
+- Slack notifications for test results
+- GitHub Pages integration for Allure reports
 
 
 ## Author
