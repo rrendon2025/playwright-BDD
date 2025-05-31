@@ -1,0 +1,55 @@
+{
+  "name": "playwright-bdd",
+  "version": "1.0.0",
+  "description": "Playwright BDD Automation Framework",
+  "main": "index.js",
+  "scripts": {
+    "test:allure:full": "npm run prepare:allure && npx cucumber-js & npm run generate:allure:report",
+    "test:allure:full:video": "npm run prepare:allure && cross-env HEADLESS=false npx cucumber-js & npm run generate:allure:report",
+    "generate:allure:report": "node src/utils/cucumber-allure-adapter.js && node src/utils/run-allure-report.js",
+    "prepare:allure": "npm run allure:clear && npm run clean:results && npm run create:results && node src/helpers/allure-env.js",
+    "allure:generate": "node_modules\\.bin\\allure generate allure-results -o allure-report --clean",
+    "allure:open": "node_modules\\.bin\\allure open allure-report",
+    "allure:report": "npm run allure:generate && npm run allure:open",
+    "allure:clear": "rimraf allure-results allure-report",
+    "clean:results": "rimraf test-results",
+    "clean:all": "rimraf node_modules test-results allure-results allure-report package-lock.json",
+    "reset": "npm run clean:all && npm install",
+    "install": "npm install && npx playwright install",
+    "clean": "rimraf node_modules package-lock.json",
+    "create:results": "node -e \"const fs=require('fs'); ['test-results', 'test-results/screenshots', 'test-results/videos'].forEach(dir => !fs.existsSync(dir) && fs.mkdirSync(dir, {recursive:true}));\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rrendon2025/playwright-BDD.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rrendon2025/playwright-BDD/issues"
+  },
+  "homepage": "https://github.com/rrendon2025/playwright-BDD#readme",
+  "dependencies": {
+    "@cucumber/cucumber": "^11.3.0",
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.15.29",
+    "cucumber-html-reporter": "^7.2.0",
+    "dotenv": "^16.5.0",
+    "express": "^4.18.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber-expressions": "^16.1.2",
+    "@cucumber/pretty-formatter": "^1.0.0",
+    "@wdio/allure-reporter": "^9.15.0",
+    "allure-commandline": "^2.22.0",
+    "allure-js-commons": "^2.0.0-beta.14",
+    "allure-playwright": "^3.2.2",
+    "cross-env": "^7.0.3",
+    "multiple-cucumber-html-reporter": "^3.9.2",
+    "rimraf": "^6.0.1",
+    "uuid": "^11.1.0"
+  }
+}
