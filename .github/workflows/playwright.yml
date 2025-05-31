@@ -38,7 +38,7 @@ jobs:
           echo "BROWSER=chromium" >> .env
           echo "HEADLESS=true" >> .env
           echo "BASE_URL=https://www.saucedemo.com" >> .env
-          echo "STANDARD_USER=standard_user1" >> .env
+          echo "STANDARD_USER=standard_user" >> .env
           echo "PASSWORD=secret_sauce" >> .env
           cat .env
       
