@@ -54,9 +54,6 @@ jobs:
           npm run prepare:allure
           npx cucumber-js || true
           
-          # Create a file to store test statistics
-          touch test-stats.txt
-          
           # Extract test statistics from Allure results
           echo "Parsing test results..."
           
@@ -80,30 +77,30 @@ jobs:
             SKIPPED_TESTS=$(grep -l '"status":"skipped"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
           fi
           
-          # Write statistics to file
-          echo "TOTAL_TESTS=$TOTAL_TESTS" > test-stats.txt
-          echo "PASSED_TESTS=$PASSED_TESTS" >> test-stats.txt
-          echo "FAILED_TESTS=$FAILED_TESTS" >> test-stats.txt
-          echo "SKIPPED_TESTS=$SKIPPED_TESTS" >> test-stats.txt
-          
           # Determine overall test status
           if [ "$FAILED_TESTS" -gt 0 ]; then
-            echo "STATUS=❌ FAILED" >> test-stats.txt
+            TEST_STATUS="❌ FAILED"
           elif [ "$TOTAL_TESTS" -eq 0 ]; then
-            echo "STATUS=⚠️ NO TESTS RUN" >> test-stats.txt
+            TEST_STATUS="⚠️ NO TESTS RUN"
           else
-            echo "STATUS=✅ PASSED" >> test-stats.txt
+            TEST_STATUS="✅ PASSED"
           fi
           
-          # Set outputs for use in later steps (as backup)
+          # Store values directly in GitHub environment variables
+          echo "TOTAL_TESTS=$TOTAL_TESTS" >> $GITHUB_ENV
+          echo "PASSED_TESTS=$PASSED_TESTS" >> $GITHUB_ENV
+          echo "FAILED_TESTS=$FAILED_TESTS" >> $GITHUB_ENV
+          echo "SKIPPED_TESTS=$SKIPPED_TESTS" >> $GITHUB_ENV
+          echo "TEST_STATUS=$TEST_STATUS" >> $GITHUB_ENV
+          
+          # Also set outputs for this step
           echo "total=$TOTAL_TESTS" >> $GITHUB_OUTPUT
           echo "passed=$PASSED_TESTS" >> $GITHUB_OUTPUT
           echo "failed=$FAILED_TESTS" >> $GITHUB_OUTPUT
           echo "skipped=$SKIPPED_TESTS" >> $GITHUB_OUTPUT
-          echo "status=$(cat test-stats.txt | grep STATUS | cut -d= -f2)" >> $GITHUB_OUTPUT
+          echo "status=$TEST_STATUS" >> $GITHUB_OUTPUT
           
-          echo "Test Statistics: Total: $TOTAL_TESTS, Passed: $PASSED_TESTS, Failed: $FAILED_TESTS, Skipped: $SKIPPED_TESTS"
-          cat test-stats.txt
+          echo "Test Statistics: Total: $TOTAL_TESTS, Passed: $PASSED_TESTS, Failed: $FAILED_TESTS, Skipped: $SKIPPED_TESTS, Status: $TEST_STATUS"
         timeout-minutes: 5
       
       - name: Generate Allure report (without server)
@@ -145,27 +142,14 @@ jobs:
         if: always()
         id: prepare_stats
         run: |
-          # Read the test statistics from file
-          if [ -f "test-stats.txt" ]; then
-            # Source the file to get the variables
-            source test-stats.txt
-            
-            # Export to GitHub outputs
-            echo "total=$TOTAL_TESTS" >> $GITHUB_OUTPUT
-            echo "passed=$PASSED_TESTS" >> $GITHUB_OUTPUT
-            echo "failed=$FAILED_TESTS" >> $GITHUB_OUTPUT
-            echo "skipped=$SKIPPED_TESTS" >> $GITHUB_OUTPUT
-            echo "status=$STATUS" >> $GITHUB_OUTPUT
-            
-            echo "Test stats prepared for Slack: Total: $TOTAL_TESTS, Passed: $PASSED_TESTS, Failed: $FAILED_TESTS, Skipped: $SKIPPED_TESTS"
-          else
-            echo "No test stats file found, using defaults"
-            echo "total=0" >> $GITHUB_OUTPUT
-            echo "passed=0" >> $GITHUB_OUTPUT
-            echo "failed=0" >> $GITHUB_OUTPUT
-            echo "skipped=0" >> $GITHUB_OUTPUT
-            echo "status=⚠️ UNKNOWN" >> $GITHUB_OUTPUT
-          fi
+          # Just echo environment variables to GitHub outputs
+          echo "total=${TOTAL_TESTS:-0}" >> $GITHUB_OUTPUT
+          echo "passed=${PASSED_TESTS:-0}" >> $GITHUB_OUTPUT
+          echo "failed=${FAILED_TESTS:-0}" >> $GITHUB_OUTPUT
+          echo "skipped=${SKIPPED_TESTS:-0}" >> $GITHUB_OUTPUT
+          echo "status=${TEST_STATUS:-⚠️ UNKNOWN}" >> $GITHUB_OUTPUT
+          
+          echo "Test stats prepared for Slack: Total: ${TOTAL_TESTS:-0}, Passed: ${PASSED_TESTS:-0}, Failed: ${FAILED_TESTS:-0}, Skipped: ${SKIPPED_TESTS:-0}, Status: ${TEST_STATUS:-⚠️ UNKNOWN}"
           
       - name: Send notification to Slack
         if: always()
