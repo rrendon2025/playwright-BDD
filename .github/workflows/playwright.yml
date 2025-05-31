@@ -82,24 +82,18 @@ jobs:
           publish_branch: gh-pages
           publish_dir: ./allure-report
           
-      - name: Send notification to Microsoft Teams
+      - name: Send notification to Slack
         if: always()
-        uses: aliencube/microsoft-teams-actions@v0.8.0
+        uses: 8398a7/action-slack@v3
         with:
-          webhook_uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          title: "Playwright BDD Test Results"
-          summary: "Test execution completed"
-          theme_color: ${{ job.status == 'success' && '00FF00' || 'FF0000' }}
-          sections: |
-            [{
-              "activityTitle": "Playwright BDD Tests - ${{ job.status }}",
-              "activitySubtitle": "Workflow run completed",
-              "activityImage": "https://github.com/rrendon2025.png",
-              "facts": [
-                { "name": "Repository", "value": "playwright-BDD" },
-                { "name": "Workflow", "value": "${{ github.workflow }}" },
-                { "name": "Status", "value": "${{ job.status }}" },
-                { "name": "Allure Report", "value": "https://rrendon2025.github.io/playwright-BDD/" }
-              ],
-              "markdown": true
-            }] 
+          status: ${{ job.status }}
+          author_name: 'Playwright BDD Tests'
+          fields: repo,message,commit,author,action,workflow,job,took
+          mention: 'here'
+          if_mention: failure
+          text: |
+            *Test Results: ${{ job.status }}*
+            *Repository:* ${{ github.repository }}
+            *Allure Report:* https://rrendon2025.github.io/playwright-BDD/
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 
