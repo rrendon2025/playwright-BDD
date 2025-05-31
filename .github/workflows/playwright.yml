@@ -54,6 +54,9 @@ jobs:
           npm run prepare:allure
           npx cucumber-js || true
           
+          # Create a file to store test statistics
+          touch test-stats.txt
+          
           # Extract test statistics from Allure results
           echo "Parsing test results..."
           
@@ -65,35 +68,42 @@ jobs:
           
           # Count test results if directory exists
           if [ -d "allure-results" ]; then
+            # Get a list of all test files (excluding metadata files)
+            TEST_FILES=$(find allure-results -name "*.json" -not -name "categories.json" -not -name "executor.json" -not -name "environment.properties")
+            
             # Count total test cases
-            TOTAL_TESTS=$(find allure-results -name "*.json" -not -name "categories.json" -not -name "executor.json" -not -name "environment.properties" | wc -l)
+            TOTAL_TESTS=$(echo "$TEST_FILES" | wc -l)
             
-            # Count passed tests
+            # Count each type of test result
             PASSED_TESTS=$(grep -l '"status":"passed"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
-            
-            # Count failed tests
             FAILED_TESTS=$(grep -l '"status":"failed"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
-            
-            # Count skipped tests
             SKIPPED_TESTS=$(grep -l '"status":"skipped"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
           fi
           
-          # Set outputs for use in later steps
-          echo "total=${TOTAL_TESTS}" >> $GITHUB_OUTPUT
-          echo "passed=${PASSED_TESTS}" >> $GITHUB_OUTPUT
-          echo "failed=${FAILED_TESTS}" >> $GITHUB_OUTPUT
-          echo "skipped=${SKIPPED_TESTS}" >> $GITHUB_OUTPUT
+          # Write statistics to file
+          echo "TOTAL_TESTS=$TOTAL_TESTS" > test-stats.txt
+          echo "PASSED_TESTS=$PASSED_TESTS" >> test-stats.txt
+          echo "FAILED_TESTS=$FAILED_TESTS" >> test-stats.txt
+          echo "SKIPPED_TESTS=$SKIPPED_TESTS" >> test-stats.txt
           
           # Determine overall test status
-          if [ "${FAILED_TESTS}" -gt 0 ]; then
-            echo "status=❌ FAILED" >> $GITHUB_OUTPUT
-          elif [ "${TOTAL_TESTS}" -eq 0 ]; then
-            echo "status=⚠️ NO TESTS RUN" >> $GITHUB_OUTPUT
+          if [ "$FAILED_TESTS" -gt 0 ]; then
+            echo "STATUS=❌ FAILED" >> test-stats.txt
+          elif [ "$TOTAL_TESTS" -eq 0 ]; then
+            echo "STATUS=⚠️ NO TESTS RUN" >> test-stats.txt
           else
-            echo "status=✅ PASSED" >> $GITHUB_OUTPUT
+            echo "STATUS=✅ PASSED" >> test-stats.txt
           fi
           
-          echo "Test Statistics: Total: ${TOTAL_TESTS}, Passed: ${PASSED_TESTS}, Failed: ${FAILED_TESTS}, Skipped: ${SKIPPED_TESTS}"
+          # Set outputs for use in later steps (as backup)
+          echo "total=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+          echo "passed=$PASSED_TESTS" >> $GITHUB_OUTPUT
+          echo "failed=$FAILED_TESTS" >> $GITHUB_OUTPUT
+          echo "skipped=$SKIPPED_TESTS" >> $GITHUB_OUTPUT
+          echo "status=$(cat test-stats.txt | grep STATUS | cut -d= -f2)" >> $GITHUB_OUTPUT
+          
+          echo "Test Statistics: Total: $TOTAL_TESTS, Passed: $PASSED_TESTS, Failed: $FAILED_TESTS, Skipped: $SKIPPED_TESTS"
+          cat test-stats.txt
         timeout-minutes: 5
       
       - name: Generate Allure report (without server)
@@ -130,6 +140,32 @@ jobs:
         run: |
           echo "Waiting for 3 minutes to ensure test results are fully processed..."
           sleep 180
+      
+      - name: Prepare test stats for Slack
+        if: always()
+        id: prepare_stats
+        run: |
+          # Read the test statistics from file
+          if [ -f "test-stats.txt" ]; then
+            # Source the file to get the variables
+            source test-stats.txt
+            
+            # Export to GitHub outputs
+            echo "total=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+            echo "passed=$PASSED_TESTS" >> $GITHUB_OUTPUT
+            echo "failed=$FAILED_TESTS" >> $GITHUB_OUTPUT
+            echo "skipped=$SKIPPED_TESTS" >> $GITHUB_OUTPUT
+            echo "status=$STATUS" >> $GITHUB_OUTPUT
+            
+            echo "Test stats prepared for Slack: Total: $TOTAL_TESTS, Passed: $PASSED_TESTS, Failed: $FAILED_TESTS, Skipped: $SKIPPED_TESTS"
+          else
+            echo "No test stats file found, using defaults"
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+            echo "skipped=0" >> $GITHUB_OUTPUT
+            echo "status=⚠️ UNKNOWN" >> $GITHUB_OUTPUT
+          fi
           
       - name: Send notification to Slack
         if: always()
@@ -142,13 +178,13 @@ jobs:
           if_mention: failure
           text: |
             *Test Results: ${{ job.status }}*
-            *Test Execution Status: ${{ steps.run_tests.outputs.status || 'Unknown' }}*
+            *Test Execution Status: ${{ steps.prepare_stats.outputs.status || '⚠️ UNKNOWN' }}*
             *Repository:* ${{ github.repository }}
             *Test Statistics:*
-            • Total Tests: ${{ steps.run_tests.outputs.total || '0' }}
-            • Passed: ${{ steps.run_tests.outputs.passed || '0' }} ✅
-            • Failed: ${{ steps.run_tests.outputs.failed || '0' }} ❌
-            • Skipped: ${{ steps.run_tests.outputs.skipped || '0' }} ⏭️
+            • Total Tests: ${{ steps.prepare_stats.outputs.total || '0' }}
+            • Passed: ${{ steps.prepare_stats.outputs.passed || '0' }} ✅
+            • Failed: ${{ steps.prepare_stats.outputs.failed || '0' }} ❌
+            • Skipped: ${{ steps.prepare_stats.outputs.skipped || '0' }} ⏭️
             *Allure Report:* https://rrendon2025.github.io/playwright-BDD/
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 
