@@ -124,6 +124,12 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./allure-report
+      
+      - name: Wait for report to be published
+        if: always()
+        run: |
+          echo "Waiting for 3 minutes to ensure test results are fully processed..."
+          sleep 180
           
       - name: Send notification to Slack
         if: always()
