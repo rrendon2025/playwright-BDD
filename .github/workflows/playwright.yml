@@ -39,7 +39,7 @@ jobs:
           echo "HEADLESS=true" >> .env
           echo "BASE_URL=https://www.saucedemo.com" >> .env
           echo "STANDARD_USER=standard_user" >> .env
-          echo "PASSWORD=secret_sauce" >> .env
+          echo "PASSWORD=secret_sauce1" >> .env
           cat .env
       
       - name: Create required directories
