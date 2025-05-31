@@ -65,16 +65,31 @@ jobs:
           
           # Count test results if directory exists
           if [ -d "allure-results" ]; then
-            # Get a list of all test files (excluding metadata files)
-            TEST_FILES=$(find allure-results -name "*.json" -not -name "categories.json" -not -name "executor.json" -not -name "environment.properties")
+            # More accurate way to count total test cases - extract from allure directly
+            # First generate the report to ensure counts are accurate
+            npx allure generate allure-results -o allure-report --clean
             
-            # Count total test cases
-            TOTAL_TESTS=$(echo "$TEST_FILES" | wc -l)
+            # Get total test count from test-cases directory (more accurate)
+            if [ -d "allure-report/data/test-cases" ]; then
+              TOTAL_TESTS=$(find allure-report/data/test-cases -name "*.json" | wc -l)
+              echo "Found $TOTAL_TESTS test cases in Allure report"
+            else
+              # Fallback to old method
+              TOTAL_TESTS=$(find allure-results -name "*.json" -not -name "categories.json" -not -name "executor.json" -not -name "environment.properties" | wc -l)
+              echo "Fallback count method: $TOTAL_TESTS test cases"
+            fi
             
-            # Count each type of test result
-            PASSED_TESTS=$(grep -l '"status":"passed"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
-            FAILED_TESTS=$(grep -l '"status":"failed"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
-            SKIPPED_TESTS=$(grep -l '"status":"skipped"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
+            # Count results by status using more accurate data
+            if [ -d "allure-report/data/test-cases" ]; then
+              PASSED_TESTS=$(grep -l '"status":"passed"' allure-report/data/test-cases/*.json 2>/dev/null | wc -l || echo 0)
+              FAILED_TESTS=$(grep -l '"status":"failed"' allure-report/data/test-cases/*.json 2>/dev/null | wc -l || echo 0)
+              SKIPPED_TESTS=$(grep -l '"status":"skipped"' allure-report/data/test-cases/*.json 2>/dev/null | wc -l || echo 0)
+            else
+              # Fallback to old method
+              PASSED_TESTS=$(grep -l '"status":"passed"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
+              FAILED_TESTS=$(grep -l '"status":"failed"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
+              SKIPPED_TESTS=$(grep -l '"status":"skipped"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
+            fi
           fi
           
           # Determine overall test status
@@ -105,12 +120,17 @@ jobs:
       
       - name: Generate Allure report (without server)
         run: |
-          # Generate adapter without browser opening
-          node src/utils/cucumber-allure-adapter.js || true
-          
-          # Just generate the report without starting server
-          echo "Generating Allure report without starting server..."
-          npx allure generate allure-results -o allure-report --clean
+          # If the report was already generated during test stats collection, don't regenerate
+          if [ ! -d "allure-report" ]; then
+            # Generate adapter without browser opening
+            node src/utils/cucumber-allure-adapter.js || true
+            
+            # Just generate the report without starting server
+            echo "Generating Allure report without starting server..."
+            npx allure generate allure-results -o allure-report --clean
+          else
+            echo "Allure report already generated, skipping generation"
+          fi
         timeout-minutes: 2
       
       - name: Upload test results
