@@ -80,4 +80,26 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: ./allure-report 
+          publish_dir: ./allure-report
+          
+      - name: Send notification to Microsoft Teams
+        if: always()
+        uses: aliencube/microsoft-teams-actions@v0.8.0
+        with:
+          webhook_uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          title: "Playwright BDD Test Results"
+          summary: "Test execution completed"
+          theme_color: ${{ job.status == 'success' && '00FF00' || 'FF0000' }}
+          sections: |
+            [{
+              "activityTitle": "Playwright BDD Tests - ${{ job.status }}",
+              "activitySubtitle": "Workflow run completed",
+              "activityImage": "https://github.com/rrendon2025.png",
+              "facts": [
+                { "name": "Repository", "value": "playwright-BDD" },
+                { "name": "Workflow", "value": "${{ github.workflow }}" },
+                { "name": "Status", "value": "${{ job.status }}" },
+                { "name": "Allure Report", "value": "https://rrendon2025.github.io/playwright-BDD/" }
+              ],
+              "markdown": true
+            }] 
