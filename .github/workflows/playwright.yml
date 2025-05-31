@@ -22,12 +22,15 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'  # Use Node.js 20 instead of 18
+          node-version: '20'
       
-      - name: Install minimal dependencies
-        run: |
-          npm install --no-optional
-          npx playwright install chromium --with-deps
+      - name: Install npm dependencies only
+        run: npm install --ignore-scripts --no-package-lock
+        timeout-minutes: 5
+      
+      - name: Install minimal browser
+        run: npx playwright install chromium --with-deps
+        timeout-minutes: 3
       
       - name: Create required directories
         run: |
@@ -39,13 +42,13 @@ jobs:
         run: |
           npm run prepare:allure
           npx cucumber-js || true
-        timeout-minutes: 5  # Add timeout for test execution
+        timeout-minutes: 5
       
       - name: Generate Allure report
         run: |
           node src/utils/cucumber-allure-adapter.js || true
           node src/utils/run-allure-report.js || true
-        timeout-minutes: 2  # Add timeout for report generation
+        timeout-minutes: 2
       
       - name: Upload test results
         uses: actions/upload-artifact@v4
