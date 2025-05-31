@@ -26,8 +26,8 @@ jobs:
       
       - name: Install minimal dependencies
         run: |
-          npm ci --no-optional
-          npx playwright install chromium
+          npm install --no-optional
+          npx playwright install chromium --with-deps
       
       - name: Create required directories
         run: |
@@ -43,8 +43,8 @@ jobs:
       
       - name: Generate Allure report
         run: |
-          node src/utils/cucumber-allure-adapter.js
-          node src/utils/run-allure-report.js
+          node src/utils/cucumber-allure-adapter.js || true
+          node src/utils/run-allure-report.js || true
         timeout-minutes: 2  # Add timeout for report generation
       
       - name: Upload test results
