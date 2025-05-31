@@ -1,4 +1,5 @@
 name: Playwright BDD Tests
+# Trigger workflow run - updated on user request
 
 on:
   push:
@@ -37,7 +38,7 @@ jobs:
           echo "BROWSER=chromium" >> .env
           echo "HEADLESS=true" >> .env
           echo "BASE_URL=https://www.saucedemo.com" >> .env
-          echo "STANDARD_USER=standard_user" >> .env
+          echo "STANDARD_USER=standard_user1" >> .env
           echo "PASSWORD=secret_sauce" >> .env
           cat .env
       
