@@ -46,8 +46,11 @@ jobs:
       
       - name: Generate Allure report
         run: |
+          # Generate adapter without browser opening
           node src/utils/cucumber-allure-adapter.js || true
-          node src/utils/run-allure-report.js || true
+          
+          # Generate report with CI mode to avoid browser opening
+          CI=true node src/utils/run-allure-report.js || true
         timeout-minutes: 2
       
       - name: Upload test results
