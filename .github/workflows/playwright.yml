@@ -32,6 +32,15 @@ jobs:
         run: npx playwright install chromium --with-deps
         timeout-minutes: 3
       
+      - name: Create .env file
+        run: |
+          echo "BROWSER=chromium" >> .env
+          echo "HEADLESS=true" >> .env
+          echo "BASE_URL=https://www.saucedemo.com" >> .env
+          echo "STANDARD_USER=standard_user" >> .env
+          echo "PASSWORD=secret_sauce" >> .env
+          cat .env
+      
       - name: Create required directories
         run: |
           mkdir -p test-results/screenshots
