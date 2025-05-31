@@ -49,9 +49,42 @@ jobs:
           mkdir -p allure-results
       
       - name: Run tests with Allure reporting
+        id: run_tests
         run: |
           npm run prepare:allure
           npx cucumber-js || true
+          
+          # Extract test statistics from Allure results
+          echo "Parsing test results..."
+          
+          # Initialize counters
+          TOTAL_TESTS=0
+          PASSED_TESTS=0
+          FAILED_TESTS=0
+          SKIPPED_TESTS=0
+          
+          # Count test results if directory exists
+          if [ -d "allure-results" ]; then
+            # Count total test cases
+            TOTAL_TESTS=$(find allure-results -name "*.json" -not -name "categories.json" -not -name "executor.json" -not -name "environment.properties" | wc -l)
+            
+            # Count passed tests
+            PASSED_TESTS=$(grep -l '"status":"passed"' allure-results/*.json | wc -l)
+            
+            # Count failed tests
+            FAILED_TESTS=$(grep -l '"status":"failed"' allure-results/*.json | wc -l)
+            
+            # Count skipped tests
+            SKIPPED_TESTS=$(grep -l '"status":"skipped"' allure-results/*.json | wc -l)
+          fi
+          
+          # Set outputs for use in later steps
+          echo "total=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+          echo "passed=$PASSED_TESTS" >> $GITHUB_OUTPUT
+          echo "failed=$FAILED_TESTS" >> $GITHUB_OUTPUT
+          echo "skipped=$SKIPPED_TESTS" >> $GITHUB_OUTPUT
+          
+          echo "Test Statistics: Total: $TOTAL_TESTS, Passed: $PASSED_TESTS, Failed: $FAILED_TESTS, Skipped: $SKIPPED_TESTS"
         timeout-minutes: 5
       
       - name: Generate Allure report (without server)
@@ -95,6 +128,11 @@ jobs:
           text: |
             *Test Results: ${{ job.status }}*
             *Repository:* ${{ github.repository }}
+            *Test Statistics:*
+            • Total Tests: ${{ steps.run_tests.outputs.total || '0' }}
+            • Passed: ${{ steps.run_tests.outputs.passed || '0' }} ✅
+            • Failed: ${{ steps.run_tests.outputs.failed || '0' }} ❌
+            • Skipped: ${{ steps.run_tests.outputs.skipped || '0' }} ⏭️
             *Allure Report:* https://rrendon2025.github.io/playwright-BDD/
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 
