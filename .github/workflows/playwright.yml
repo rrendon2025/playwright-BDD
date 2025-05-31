@@ -11,6 +11,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Add timeout to prevent stuck jobs
     permissions:
       contents: write
       pages: write
@@ -21,13 +22,12 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          # Remove cache to avoid lock file error
+          node-version: '20'  # Use Node.js 20 instead of 18
       
-      - name: Install dependencies
+      - name: Install minimal dependencies
         run: |
-          npm install
-          npx playwright install --with-deps
+          npm ci --no-optional
+          npx playwright install chromium
       
       - name: Create required directories
         run: |
@@ -39,11 +39,13 @@ jobs:
         run: |
           npm run prepare:allure
           npx cucumber-js || true
+        timeout-minutes: 5  # Add timeout for test execution
       
       - name: Generate Allure report
         run: |
           node src/utils/cucumber-allure-adapter.js
           node src/utils/run-allure-report.js
+        timeout-minutes: 2  # Add timeout for report generation
       
       - name: Upload test results
         uses: actions/upload-artifact@v4
