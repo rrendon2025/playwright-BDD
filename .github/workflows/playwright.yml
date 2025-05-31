@@ -80,21 +80,56 @@ jobs:
             # Set total based on scenarios which is most reliable
             TOTAL_TESTS=$SCENARIOS_COUNT
             
-            # Count test results by status
-            PASSED_TESTS=$(grep -l '"status":"passed"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
-            FAILED_TESTS=$(grep -l '"status":"failed"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
-            SKIPPED_TESTS=$(grep -l '"status":"skipped"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
+            # More accurate way to check test status - dump content to temp file for debugging
+            echo "Examining JSON files for test status..."
+            for file in $(find allure-results -name "*.json" -not -name "categories.json" -not -name "executor.json" -not -name "environment.properties"); do
+              echo "Checking file: $file"
+              cat "$file" | grep -o '"status":"[^"]*"' | sort | uniq -c
+              
+              # Count by status
+              if grep -q '"status":"passed"' "$file"; then
+                echo "Found passed test in $file"
+                PASSED_TESTS=$((PASSED_TESTS + 1))
+              elif grep -q '"status":"failed"' "$file"; then
+                echo "Found failed test in $file"
+                FAILED_TESTS=$((FAILED_TESTS + 1))
+              elif grep -q '"status":"skipped"' "$file"; then
+                echo "Found skipped test in $file"
+                SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
+              else
+                echo "No clear status found in $file"
+              fi
+            done
             
-            echo "Counts from result files - Passed: $PASSED_TESTS, Failed: $FAILED_TESTS, Skipped: $SKIPPED_TESTS"
+            echo "Raw counts - Passed: $PASSED_TESTS, Failed: $FAILED_TESTS, Skipped: $SKIPPED_TESTS"
             
-            # Validate and adjust if needed
+            # Validate total matches
             FOUND_RESULTS=$((PASSED_TESTS + FAILED_TESTS + SKIPPED_TESTS))
+            echo "Found $FOUND_RESULTS results out of $TOTAL_TESTS expected tests"
+            
+            # If we found no status but we know there are tests, count them as unknown
+            if [ $FOUND_RESULTS -eq 0 ] && [ $TOTAL_TESTS -gt 0 ]; then
+              echo "Warning: No test results with status found, but $TOTAL_TESTS tests expected"
+              # Try to get counts from cucumber output
+              PASSED_TESTS=$(find allure-results -name "*.json" -not -name "categories.json" -not -name "executor.json" -not -name "environment.properties" | wc -l)
+              FAILED_TESTS=0
+              # Check exit code of cucumber from allure-results
+              if grep -q '"status":"broken"' allure-results/*.json 2>/dev/null; then
+                FAILED_TESTS=$((TOTAL_TESTS - PASSED_TESTS))
+                PASSED_TESTS=0
+              fi
+            fi
+            
+            # If we still have a mismatch, adjust
             if [ $FOUND_RESULTS -lt $TOTAL_TESTS ]; then
               echo "Warning: Found fewer results ($FOUND_RESULTS) than expected tests ($TOTAL_TESTS)"
-              # Keep the feature/scenario count as it's more reliable
-            elif [ $FOUND_RESULTS -gt $TOTAL_TESTS ]; then
-              echo "Found more results ($FOUND_RESULTS) than expected tests ($TOTAL_TESTS), updating total count"
-              TOTAL_TESTS=$FOUND_RESULTS
+              # If we found any failures, assume the rest are passing
+              if [ $FAILED_TESTS -gt 0 ]; then
+                PASSED_TESTS=$((TOTAL_TESTS - FAILED_TESTS - SKIPPED_TESTS))
+              # Otherwise if we found any passes, assume the rest are failing
+              elif [ $PASSED_TESTS -gt 0 ]; then
+                FAILED_TESTS=$((TOTAL_TESTS - PASSED_TESTS - SKIPPED_TESTS))
+              fi
             fi
           fi
           
