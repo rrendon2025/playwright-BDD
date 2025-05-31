@@ -69,22 +69,31 @@ jobs:
             TOTAL_TESTS=$(find allure-results -name "*.json" -not -name "categories.json" -not -name "executor.json" -not -name "environment.properties" | wc -l)
             
             # Count passed tests
-            PASSED_TESTS=$(grep -l '"status":"passed"' allure-results/*.json | wc -l)
+            PASSED_TESTS=$(grep -l '"status":"passed"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
             
             # Count failed tests
-            FAILED_TESTS=$(grep -l '"status":"failed"' allure-results/*.json | wc -l)
+            FAILED_TESTS=$(grep -l '"status":"failed"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
             
             # Count skipped tests
-            SKIPPED_TESTS=$(grep -l '"status":"skipped"' allure-results/*.json | wc -l)
+            SKIPPED_TESTS=$(grep -l '"status":"skipped"' allure-results/*.json 2>/dev/null | wc -l || echo 0)
           fi
           
           # Set outputs for use in later steps
-          echo "total=$TOTAL_TESTS" >> $GITHUB_OUTPUT
-          echo "passed=$PASSED_TESTS" >> $GITHUB_OUTPUT
-          echo "failed=$FAILED_TESTS" >> $GITHUB_OUTPUT
-          echo "skipped=$SKIPPED_TESTS" >> $GITHUB_OUTPUT
+          echo "total=${TOTAL_TESTS}" >> $GITHUB_OUTPUT
+          echo "passed=${PASSED_TESTS}" >> $GITHUB_OUTPUT
+          echo "failed=${FAILED_TESTS}" >> $GITHUB_OUTPUT
+          echo "skipped=${SKIPPED_TESTS}" >> $GITHUB_OUTPUT
           
-          echo "Test Statistics: Total: $TOTAL_TESTS, Passed: $PASSED_TESTS, Failed: $FAILED_TESTS, Skipped: $SKIPPED_TESTS"
+          # Determine overall test status
+          if [ "${FAILED_TESTS}" -gt 0 ]; then
+            echo "status=❌ FAILED" >> $GITHUB_OUTPUT
+          elif [ "${TOTAL_TESTS}" -eq 0 ]; then
+            echo "status=⚠️ NO TESTS RUN" >> $GITHUB_OUTPUT
+          else
+            echo "status=✅ PASSED" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "Test Statistics: Total: ${TOTAL_TESTS}, Passed: ${PASSED_TESTS}, Failed: ${FAILED_TESTS}, Skipped: ${SKIPPED_TESTS}"
         timeout-minutes: 5
       
       - name: Generate Allure report (without server)
@@ -127,6 +136,7 @@ jobs:
           if_mention: failure
           text: |
             *Test Results: ${{ job.status }}*
+            *Test Execution Status: ${{ steps.run_tests.outputs.status || 'Unknown' }}*
             *Repository:* ${{ github.repository }}
             *Test Statistics:*
             • Total Tests: ${{ steps.run_tests.outputs.total || '0' }}
