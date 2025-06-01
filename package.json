@@ -17,7 +17,12 @@
     "reset": "npm run clean:all && npm install",
     "install": "npm install && npx playwright install",
     "clean": "rimraf node_modules package-lock.json",
-    "create:results": "node -e \"const fs=require('fs'); ['test-results', 'test-results/screenshots', 'test-results/videos'].forEach(dir => !fs.existsSync(dir) && fs.mkdirSync(dir, {recursive:true}));\""
+    "create:results": "node -e \"const fs=require('fs'); ['test-results', 'test-results/screenshots', 'test-results/videos'].forEach(dir => !fs.existsSync(dir) && fs.mkdirSync(dir, {recursive:true}));\"",
+    "test:api": "npx cucumber-js src/features/api/user.feature --tags @api",
+    "test:api:allure": "npm run prepare:allure && npx cucumber-js src/features/api/user.feature --tags @api & npm run generate:allure:report",
+    "test:ui": "npx cucumber-js src/features/ui/*.feature",
+    "test:all": "npx cucumber-js src/features/api/user.feature src/features/ui/*.feature",
+    "test:all:allure": "npm run prepare:allure && npx cucumber-js src/features/api/user.feature src/features/ui/*.feature & npm run generate:allure:report"
   },
   "repository": {
     "type": "git",

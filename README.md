@@ -1,6 +1,6 @@
 # Playwright BDD Automation Framework
 
-A robust automation framework built with Playwright, TypeScript, and Cucumber.js for BDD-style testing.
+A robust automation framework built with Playwright, TypeScript, and Cucumber.js for BDD-style testing. Supports both UI and API testing.
 
 ## Features
 
@@ -9,6 +9,7 @@ A robust automation framework built with Playwright, TypeScript, and Cucumber.js
 - TypeScript for type safety
 - Allure reporting integration
 - Cross-browser testing
+- API testing capabilities
 - Environment configuration via .env file
 - Screenshot capture on test failures
 - Cross-platform compatibility (Windows, Linux, macOS)
@@ -55,12 +56,18 @@ PASSWORD=secret_sauce
 
 ### Run all tests
 ```bash
-npm test
+npm run test:all
 ```
 
-### Run specific test suites
+### Run UI tests
 ```bash
-npm run test:login       # Run login tests
+npm run test:ui
+```
+
+### Run API tests
+```bash
+npm run test:api         # Run all API tests
+npm run test:api:tc1     # Run specific API test case 1
 ```
 
 ### Run tests with GUI (browser visible)
@@ -75,12 +82,17 @@ npm run test:gui:login   # Run login tests with browser visible
 These commands will run tests, generate the Allure report, and open it in your browser - all in one step:
 
 ```bash
+# Run all tests (UI and API) with Allure report
+npm run test:all:allure
+
+# Run only API tests with Allure report
+npm run test:api:allure
+
 # Headless mode (CLI execution)
 npm run test:allure:full          # Run all tests in headless mode with Allure report
 
 # With browser visible (video recording)
 npm run test:allure:full:video    # Run all tests with browser visible and Allure report
-npm run test:allure:full:login    # Run login tests with browser visible and Allure report
 ```
 
 #### Two-step approach
@@ -89,7 +101,6 @@ If you prefer more control, you can run these commands separately:
 1. First run tests and prepare Allure results:
 ```bash
 npm run test:gui:allure          # Run all tests and prepare Allure results
-npm run test:gui:allure:login    # Run login tests and prepare Allure results
 ```
 
 2. Then generate and view the Allure report:
@@ -203,11 +214,20 @@ playwright-BDD/
 ├── allure-results/       # Raw Allure results
 ├── allure-report/        # Generated Allure reports
 ├── src/
+│   ├── api/              # API testing implementation
+│   │   ├── clients/      # API client functions (GET, POST, etc.)
+│   │   ├── requests/     # Request payload builders or schema templates
+│   │   ├── responses/    # Response validators or data extractors
+│   │   └── utils/        # API utilities for authentication, etc.
 │   ├── features/         # Cucumber feature files
+│   │   ├── api/          # API feature files
+│   │   └── ui/           # UI feature files
 │   ├── helpers/          # Helper scripts
 │   ├── pages/            # Page Object Model classes
 │   ├── reports/          # Test reports
 │   ├── steps/            # Cucumber step definitions
+│   │   ├── api/          # API step definitions
+│   │   └── ui/           # UI step definitions
 │   └── utils/            # Utility functions
 ├── test-results/         # Test results, screenshots, and videos
 │   ├── screenshots/      # Screenshots captured during tests
@@ -256,19 +276,26 @@ To enable Ctrl+Click navigation from feature files to step definitions:
 
 ## Test Cases
 
-### Login Tests
-- TC1: Verify Title Page
-- TC2: Login with valid credentials
-- TC3: Login with invalid credentials
+### API Tests
+- TC1: Verify homepage content through API (GET request, status 200, content validation)
+- TC2: Verify manifest.json content (GET request, status 200, JSON structure validation)
 
-### Inventory Tests
-- TC1: Validate Sauce Labs Backpack product details
-- TC2: Add Sauce Labs Backpack to cart
+### UI Tests
+
+#### Login Tests
+- Verify Title Page
+- Login with valid credentials
+- Login with invalid credentials
+
+#### Inventory Tests
+- Validate Sauce Labs Backpack product details
+- Add Sauce Labs Backpack to cart
 
 ## Key Features
 
 - Cross-platform compatibility (Windows, Linux, macOS)
 - Uses a single browser instance for all tests
+- API testing capabilities for complete end-to-end testing
 - Environment variables are stored in a root-level `.env` file
 - Automatically manages test result directories (screenshots, videos)
 - Generates comprehensive HTML and Allure reports
