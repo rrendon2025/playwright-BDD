@@ -26,7 +26,7 @@ A robust automation framework built with Playwright, TypeScript, and Cucumber.js
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/rrendon2025/playwright-BDD.git
+git clone https://github.com/rrendon2025/playwright-bdd-automation.git
 cd playwright-BDD
 ```
 
