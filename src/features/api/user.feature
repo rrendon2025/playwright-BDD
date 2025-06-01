@@ -4,7 +4,7 @@ Feature: Sauce Demo - API Tests
   Scenario: TC1 - Verify homepage content through API
     Given I set the request URL to "https://www.saucedemo.com/"
     When I send a GET request
-    Then the response status code should be 201
+    Then the response status code should be 200
     And the response should contain "Swag Labs"
 
   @api @get @json
