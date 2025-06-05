@@ -192,8 +192,7 @@ The framework is configured to automatically publish Allure reports to GitHub Pa
 
 2. **Access Your Reports**:
    - After the GitHub Actions workflow runs successfully, your Allure reports will be available at:
-   - `https://[your-username].github.io/playwright-BDD/`
-   - For example: https://rrendon2025.github.io/playwright-BDD/
+   - For example: https://rrendon2025.github.io/playwright-bdd-automation/
 
 3. **Workflow Configuration**:
    - The GitHub Actions workflow automatically:
