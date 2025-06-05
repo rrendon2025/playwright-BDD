@@ -27,12 +27,12 @@ A robust automation framework built with Playwright, TypeScript, and Cucumber.js
 1. Clone the repository:
 ```bash
 git clone https://github.com/rrendon2025/playwright-bdd-automation.git
-cd playwright-BDD
+cd playwright-bdd-automation
 ```
 
 2. Install dependencies and Playwright browsers (recommended):
 ```bash
-npm run install
+npm run setup
 ```
 
 Alternatively, install only npm dependencies:
@@ -119,7 +119,7 @@ npm run allure:open      # Open the Allure report in a browser
 ### First-time Setup
 For a new clone or installation on a different machine:
 ```bash
-npm run install  # Install all dependencies and Playwright browsers
+npm run setup  # Install all dependencies and Playwright browsers
 ```
 
 ### Cleaning Up

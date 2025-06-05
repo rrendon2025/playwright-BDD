@@ -15,7 +15,7 @@
     "clean:results": "rimraf test-results",
     "clean:all": "rimraf node_modules test-results allure-results allure-report package-lock.json",
     "reset": "npm run clean:all && npm install",
-    "install": "npm install && npx playwright install",
+    "setup": "npm install && npx playwright install",
     "clean": "rimraf node_modules package-lock.json",
     "create:results": "node -e \"const fs=require('fs'); ['test-results', 'test-results/screenshots', 'test-results/videos'].forEach(dir => !fs.existsSync(dir) && fs.mkdirSync(dir, {recursive:true}));\"",
     "test:api": "npx cucumber-js src/features/api/user.feature --tags @api",
