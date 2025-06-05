@@ -9,7 +9,7 @@ Feature: Login Functionality - UI Tests
 
   @login-title
   Scenario: Verify Title Page
-    Then the page title should be "Swag Labs-Test"
+    Then the page title should be "Swag Labs"
     And the login logo should be displayed
 
   @login-valid

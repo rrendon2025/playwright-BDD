@@ -11,7 +11,7 @@ Feature: Sauce Demo - API Tests
   Scenario: TC2 - Verify manifest.json content
     Given I set the request URL to "https://www.saucedemo.com/manifest.json"
     When I send a GET request
-    Then the response status code should be 400
+    Then the response status code should be 200
     And the response body should contain the following values:
       | theme_color       | #eefcf6       |
       | background_color  | #132322       |
